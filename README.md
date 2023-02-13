@@ -215,9 +215,16 @@ SELECT IF(10>5, '크다', '작다') AS result;
 
 
 
-### DATE FORM
+### DATE_FORMAT
 
-- 1999/07/09 23:22:09 -> 
+- Year, Month, Day 정보만 출력하고 싶다면
+
+- `1992-03-16 00:00:00` 👉 `1999-07-09`
+
+  ```sql
+  DATE_FORMAT(DATE_OF_BIRTH, "%Y-%m-%d")AS DATE_OF_BIRTH
+  ```
+
 
 
 
