@@ -39,8 +39,6 @@ SELECT IF(10>5, '크다', '작다') AS result;
   where NAME in ('Lucy', 'Ella', 'Pickle', 'Rogan', 'Sabrina', 'Mitty');
   ```
 
-- [출처](https://paris-in-the-rain.tistory.com/100)
-
 
 
 ### Between
@@ -87,11 +85,24 @@ SELECT IF(10>5, '크다', '작다') AS result;
 
 
 
-### Case : 아직 안써봄
+### Case
 
 - `when`, `else`, `end`의 키워드와 함께 사용
 
+  ```sql
+  SELECT HISTORY_ID,
+          CAR_ID,
+          DATE_FORMAT(START_DATE, '%Y-%m-%d') as START_DATE ,
+          DATE_FORMAT(END_DATE, '%Y-%m-%d') as END_DATE,
+          case when (DATEDIFF( END_DATE, START_DATE) + 1) >= 30 then '장기 대여'
+               else '단기 대여'
+               end as RENT_TYPE
+  FROM CAR_RENTAL_COMPANY_RENTAL_HISTORY
+  WHERE YEAR(START_DATE) = 2022 AND MONTH(START_DATE) = 9
+  ORDER BY HISTORY_ID DESC
+  ```
 
+  
 
 ### Limit
 
@@ -140,9 +151,23 @@ SELECT IF(10>5, '크다', '작다') AS result;
 ### Distinct
 
 - 중복된 데이터를 없애고 조회하는 경우
-- `Select Distinct 필드이름`
 
+  ```sql
+  Select Distinct 필드이름
+  
+  SELECT YEAR(SALES_DATE) AS YEAR, 
+  				MONTH(SALES_DATE) AS MONTH, 
+  				GENDER, 
+  				COUNT(DISTINCT ONLINE_SALE.USER_ID) as USERS #여기!
+  FROM ONLINE_SALE
+  LEFT JOIN USER_INFO
+  	ON USER_INFO.USER_ID = ONLINE_SALE.USER_ID
+  WHERE GENDER IS NOT NULL
+  GROUP BY YEAR(SALES_DATE), MONTH(SALES_DATE), GENDER
+  ORDER BY YEAR, MONTH, GENDER
+  ```
 
+  
 
 ### Where
 
@@ -182,7 +207,12 @@ SELECT IF(10>5, '크다', '작다') AS result;
   ORDER BY 필드이름1, 필드이름2 DESC, 필드이름3 ASC
   ```
 
-  
+- `ORDER BY 1` == `ORDER BY 필드1`
+- `ORDER BY 1 DESC` 도 가능
+
+
+
+
 
 ### 집합연산
 
@@ -207,11 +237,22 @@ SELECT IF(10>5, '크다', '작다') AS result;
 ### 소수점
 
 - CEIL(소수) : 올림
-- FLOOR(소수) : 버림
+
+- FLOOR(소수) : 소수점 버림 -> 결과가 정수
+
 - Round(소수, 반올림할 자리 값) : 반올림
+
   - 반올림할 자리값은 생략가능
   - 생략한경우 default로 0이 들어감
   - [0] 소수점 첫째자리, [1] 소수점 둘째자리 ...
+
+- TRUNCATE : 버림 -> 소숫점 몇번째 부터 버릴건지 지정할 수 있음
+
+  ```sql
+  SELECT TRUNCATE(135.375, 2); # 135.37
+  ```
+
+  
 
 
 
@@ -227,7 +268,6 @@ SELECT IF(10>5, '크다', '작다') AS result;
 
 
 
-
 ### GROUP BY
 
 - 두개의 조건으로 `GROUP BY`를 사용할 수도 있음
@@ -239,7 +279,85 @@ SELECT IF(10>5, '크다', '작다') AS result;
   HAVING COUNT(user_id) >= 2
   ```
 
+- STEP에 따라 GROUP을 나누고 싶으면, 피쳐의 값을 수정하는 코드를 GROUP BY 다음에 짜주면 됨 
+
+  ```sql
+  SELECT Floor(PRICE/10000) * 10000 AS PRICE_GROUP, Count(*) AS PRODUCTS
+  from PRODUCT
+  group by Floor(PRICE/10000) * 10000
+  ORDER BY 1
+  ```
+
+  - Cf) 정수끼리 / 를 하면 몫만 나오는 것으로 알고있는데
+    왜인지 모르겠지만 소수점 결과가 나왔다.
+  - 이를 정수로 만들기 위해 `FLOOR`를 사용함
+  - [StackOverflow 참고](https://stackoverflow.com/questions/35792821/sql-group-by-steps)
+
   
+
+### RECURSIVE
+
+- [문제) 입양 시각 구하기(2)](https://school.programmers.co.kr/learn/courses/30/lessons/59413)
+- 07시부터 20시 까지의 데이터만 있는데, 나머지 구간에 대해(23시까지) 없는 데이터에는 0을 채워 넣어야함
+
+
+
+### HOUR
+
+- HOUR(DATETIME) 이렇게 하면 '시 정보'만 알수있음
+
+
+
+### 두 날짜 비교 
+
+- DATE(1999.7.09) **between** START_DATE **and** END_DATE
+- '1999.07.09' **between** START_DATE **and** END_DATE
+
+
+
+
+
+### WITH
+
+
+
+
+
+```sql
+# 세단, suv 중에 빌릴 수 있는 차 목록
+# 1이면 못빌림, 0이면 빌릴 수 있음
+WITH CTE AS (SELECT H.CAR_ID, DAILY_FEE, CAR_TYPE, SUM (CASE 
+    WHEN START_DATE NOT BETWEEN DATE('2022-11-01') AND DATE('2022-11-30')
+        AND END_DATE NOT BETWEEN DATE('2022-11-01') AND DATE('2022-11-30') 
+        then 0
+    ELSE 1
+    END )AS CAN_RENT
+FROM CAR_RENTAL_COMPANY_RENTAL_HISTORY H
+LEFT JOIN CAR_RENTAL_COMPANY_CAR C
+ON H.CAR_ID = C.CAR_ID
+WHERE CAR_TYPE IN ('세단', 'SUV')
+GROUP BY CAR_ID
+HAVING CAN_RENT = 0
+),
+
+DC AS (
+    SELECT *
+    FROM CAR_RENTAL_COMPANY_DISCOUNT_PLAN
+    WHERE CAR_TYPE IN ('세단', 'SUV')
+    AND DURATION_TYPE = '30일 이상'
+)
+
+SELECT CAR_ID, DC.CAR_TYPE , ROUND((DAILY_FEE * 30 ) * (100 - discount_rate) / 100) AS FEE
+FROM CTE
+LEFT JOIN DC
+ON DC.CAR_TYPE = CTE.CAR_TYPE
+WHERE FLOOR((DAILY_FEE * 30 ) * (100 - discount_rate) / 100)  >= 500000
+AND FLOOR((DAILY_FEE * 30 ) * (100 - discount_rate) / 100)  < 2000000
+ORDER BY FEE DESC, CAR_TYPE, CAR_ID DESC
+
+```
+
+
 
 
 
