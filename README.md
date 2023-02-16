@@ -1,5 +1,10 @@
 ## SQL 코딩테스트 대비
 
+- [프로그래머스 SQL 고득점Kit](https://school.programmers.co.kr/learn/challenges?tab=sql_practice_kit) 1회차 문제풀이 완료 (2022.02.17)
+
+</br>
+
+## 개념 정리
 
 
 ### IF : Select, Where 절에서 사용가능
@@ -359,8 +364,10 @@ SELECT IF(10>5, '크다', '작다') AS result;
 - `INNER JOIN`을 사용할때 `LEFT`/`RIGHT`를 붙이는것 처럼,
   `OUTER JOIN`이 사용할때도 마찬가지로  `LEFT`/`RIGHT`가 함께 와야함.
   실수하지말것!
+- `FROM` 안에 2개 이상의 TABLE을 사용하고  `JOIN`을 사용할 경우,
+  FROM절 안에 쓰는 테이블의 순서 주의!
 
-
+ 
 
 ### STRING
 
@@ -401,9 +408,16 @@ SELECT IF(10>5, '크다', '작다') AS result;
 
     
 
+3. 제대로 구현했는데도 지속적으로 오류가 발생할경우, **DISTINCT** 따져봤는지 생각해볼것
+   - `COUNT(DISTINCT 필드명)`
+
+
+
+
+
 ---
 
 ## 출처
 
 1. [동네코더의 IT, 인공지능 이야기](https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=baek2sm&logNo=221578169366)
-2. [live the life you love](
+2. [live the life you love](https://paris-in-the-rain.tistory.com/100)
