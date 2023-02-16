@@ -55,7 +55,10 @@ SELECT IF(10>5, '크다', '작다') AS result;
 
 ### IFNULL
 
-- IFNULL(feature명, 'NONE') -> feature컬럼의 값이 null이면 'NONE으로 채워넣기'
+- **`IFNULL(feature명, 'NONE')`** 
+
+  -  feature컬럼의 값이 null이면 'NONE으로 채워넣기'
+  - 순서 주의!
 
   ```sql
   SELECT ANIMAL_TYPE, IFNULL(NAME,'No name') AS NAME, SEX_UPON_INTAKE
@@ -114,7 +117,8 @@ SELECT IF(10>5, '크다', '작다') AS result;
 
 ### MIN(), MAX(), COUNT(), AVG(), SUM()
 
-- count는 null을 포함시키지 않고 집계됨
+- coun(*) : 모든 행의 개수 count (null 포함)
+- count(특정필드) : null 제외 count
 - Select에서 사용
 - 집계함수라고 함
 - `Group by`와 함께 사용되는 경우가 많음
@@ -212,28 +216,6 @@ SELECT IF(10>5, '크다', '작다') AS result;
 
 
 
-
-
-### 집합연산
-
-- Union :  합집합 (중복 비허용)
-
-- Union All : 합집합 (중복 허용)
-
-- Minus : 차집합 
-
-- INTERSECT : 교집합
-
-  ```sql
-  SELECT 필드이름
-  FROM 테이블1
-  UNION (또는 UNION ALL, MINUS, INTERSECT)
-  SELECT 필드이름
-  FROM 테이블2
-  ```
-
-
-
 ### 소수점
 
 - CEIL(소수) : 올림
@@ -254,8 +236,6 @@ SELECT IF(10>5, '크다', '작다') AS result;
 
   
 
-
-
 ### DATE_FORMAT
 
 - Year, Month, Day 정보만 출력하고 싶다면
@@ -265,6 +245,15 @@ SELECT IF(10>5, '크다', '작다') AS result;
   ```sql
   DATE_FORMAT(DATE_OF_BIRTH, "%Y-%m-%d")AS DATE_OF_BIRTH
   ```
+
+
+
+### DATEDIFF
+
+- 기간을 구해야하는 문제라면,
+  `END_DATE` - `START_DATE` 계산할때 **`+1`** 해야하는것 잊지말것!
+
+
 
 
 
@@ -315,47 +304,76 @@ SELECT IF(10>5, '크다', '작다') AS result;
 
 
 
-
-
 ### WITH
 
+- WITH 구문 다중 변수 사용
+
+  - `,` 사용
+
+  ```sql
+  WITH CTE1 AS ( ),
+  CTE2 AS ( )
+  ```
 
 
 
 
-```sql
-# 세단, suv 중에 빌릴 수 있는 차 목록
-# 1이면 못빌림, 0이면 빌릴 수 있음
-WITH CTE AS (SELECT H.CAR_ID, DAILY_FEE, CAR_TYPE, SUM (CASE 
-    WHEN START_DATE NOT BETWEEN DATE('2022-11-01') AND DATE('2022-11-30')
-        AND END_DATE NOT BETWEEN DATE('2022-11-01') AND DATE('2022-11-30') 
-        then 0
-    ELSE 1
-    END )AS CAN_RENT
-FROM CAR_RENTAL_COMPANY_RENTAL_HISTORY H
-LEFT JOIN CAR_RENTAL_COMPANY_CAR C
-ON H.CAR_ID = C.CAR_ID
-WHERE CAR_TYPE IN ('세단', 'SUV')
-GROUP BY CAR_ID
-HAVING CAN_RENT = 0
-),
 
-DC AS (
-    SELECT *
-    FROM CAR_RENTAL_COMPANY_DISCOUNT_PLAN
-    WHERE CAR_TYPE IN ('세단', 'SUV')
-    AND DURATION_TYPE = '30일 이상'
-)
+### 집합연산
 
-SELECT CAR_ID, DC.CAR_TYPE , ROUND((DAILY_FEE * 30 ) * (100 - discount_rate) / 100) AS FEE
-FROM CTE
-LEFT JOIN DC
-ON DC.CAR_TYPE = CTE.CAR_TYPE
-WHERE FLOOR((DAILY_FEE * 30 ) * (100 - discount_rate) / 100)  >= 500000
-AND FLOOR((DAILY_FEE * 30 ) * (100 - discount_rate) / 100)  < 2000000
-ORDER BY FEE DESC, CAR_TYPE, CAR_ID DESC
+- `Union` :  합집합 (중복 비허용)
 
-```
+- `Union All` : 합집합 (중복 허용)
+
+- **[ORACLE]** `Minus` : 차집합
+
+  - **[MySQL]** `LEFT JOIN` & `IS NULL` 
+
+  - **[MySQL]** `WHERE` & `NOT IN`
+
+- **[ORACLE]** `INTERSECT` : 교집합
+
+  - **[MySQL]** : `INNER JOIN`
+
+  ```sql
+  SELECT 필드이름
+  FROM 테이블1
+  UNION (또는 UNION ALL)
+  SELECT 필드이름
+  FROM 테이블2
+  ```
+
+
+
+
+
+### JOIN
+
+- <img src="https://hongong.hanbit.co.kr/wp-content/uploads/2021/11/OUTER-JOIN_%EB%8D%94%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0-1.png" alt="OUTER-JOIN_더알아보기-1" style="zoom: 50%;" />
+
+- 👆출처 : 한빛미디어
+- `LEFT INNER JOIN`
+- `LEFT OUTER JOIN`
+- **[ORACLE]** `FULL OUTER JOIN`
+  - **[MySQL]** `LEFT OUTER JOIN` (`UNION`) `RIGHT OUTER JOIN`
+- `INNER JOIN`을 사용할때 `LEFT`/`RIGHT`를 붙이는것 처럼,
+  `OUTER JOIN`이 사용할때도 마찬가지로  `LEFT`/`RIGHT`가 함께 와야함.
+  실수하지말것!
+
+
+
+### STRING
+
+- SUBSTRING
+
+  ```sql
+  SELECT LEFT(PRODUCT_CODE, 2) AS CATEGORY, COUNT(*) AS PRODUCTS
+  FROM PRODUCT
+  GROUP BY LEFT(PRODUCT_CODE, 2)
+  ORDER BY CATEGORY
+  ```
+
+- https://yeahvely.tistory.com/89
 
 
 
@@ -365,7 +383,7 @@ ORDER BY FEE DESC, CAR_TYPE, CAR_ID DESC
 
 ## 에러관련
 
-1. Every derived table must have its own alias
+1. **Every derived table must have its own alias**
 
    - 서브쿼리를 사용하는 경우, 서브쿼리 끝에 가상의 테이블의 이름을 넣어줌
 
@@ -375,6 +393,13 @@ ORDER BY FEE DESC, CAR_TYPE, CAR_ID DESC
      ```
 
 
+
+2. **Invalid use of group function**
+
+   - 명령어 순서 실수하지 않았는지 체크하기
+   - `SELECT` 컬럼명 > `FROM` 테이블명 > `WHERE` > `GROUP BY` > `HAVING` > `ORDER BY`
+
+    
 
 ---
 
