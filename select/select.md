@@ -1,6 +1,201 @@
+
+
 #### 평균 일일 대여 요금 구하기
+
 ```sql
 SELECT round(AVG(DAILY_FEE)) AS AVERAGE_FEE
 From CAR_RENTAL_COMPANY_CAR
 where CAR_TYPE = "SUV"
 ```
+
+
+
+#### 조건에 맞는 도서 리스트 출력하기
+
+```sql
+SELECT BOOK_ID, DATE_FORMAT(PUBLISHED_DATE, "%Y-%m-%d") as PUBLISHED_DATE
+FROM BOOK
+WHERE YEAR(PUBLISHED_DATE) =2021
+and CATEGORY = '인문'
+ORDER BY PUBLISHED_DATE
+```
+
+
+
+#### 12세 이하인 여자 환자 목록 출력하기
+
+```sql
+SELECT PT_NAME, PT_NO, GEND_CD, AGE, IFNULL(TLNO, "NONE") as TLNO
+FROM PATIENT
+WHERE AGE <= 12 and GEND_CD = "W"
+ORDER BY AGE DESC, PT_NAME;
+```
+
+
+
+#### 조건에 부합하는 중고거래 댓글 조회하기
+
+```sql
+SELECT B.TITLE, B.BOARD_ID,
+  R.REPLY_ID, R.WRITER_ID,R.CONTENTS, 
+  DATE_FORMAT(R.CREATED_DATE, '%Y-%m-%d') as CREATED_DATE
+FROM USED_GOODS_BOARD as B
+RIGHT JOIN USED_GOODS_REPLY as R on B.BOARD_ID = R.BOARD_ID
+WHERE YEAR(B.CREATED_DATE) = "2022" and MONTH(B.CREATED_DATE) = "10"
+ORDER BY CREATED_DATE, TITLE
+```
+
+
+
+#### 3월에 태어난 여성 회원 목록 출력하기
+
+```sql
+SELECT 
+    MEMBER_ID, 
+    MEMBER_NAME, 
+    GENDER, 
+    DATE_FORMAT(DATE_OF_BIRTH, "%Y-%m-%d") as DATE_OF_BIRTH
+FROM 
+    MEMBER_PROFILE
+WHERE 
+    MONTH(DATE_OF_BIRTH) = 3 
+    AND GENDER = 'W' 
+    AND TLNO IS NOT NULL
+ORDER BY 
+    MEMBER_ID;
+```
+
+
+
+#### 흉부외과 또는 일반외과 의사 목록 출력하기 
+
+```sql
+SELECT DR_NAME,DR_ID,MCDP_CD,DATE_FORMAT(HIRE_YMD, '%Y-%m-%d') as HIRE_YMD
+FROM DOCTOR
+WHERE MCDP_CD = 'CS' 
+or MCDP_CD ='GS'
+ORDER BY HIRE_YMD desc, DR_NAME
+
+# WHERE 아래와 같이도 작성가능
+WHERE MCDP_CD IN ('CS', 'GS')
+```
+
+
+
+#### 과일로 만든 아이스크림 고르기
+
+```sql
+SELECT f.FLAVOR
+FROM FIRST_HALF f Inner join ICECREAM_INFO i
+ON f.FLAVOR=i.FLAVOR
+WHERE i.INGREDIENT_TYPE like 'fruit%'
+and f.TOTAL_ORDER > 3000
+ORDER BY f.TOTAL_ORDER desc
+
+SELECT H.FLAVOR
+FROM FIRST_HALF as H
+LEFT JOIN ICECREAM_INFO as I on H.FLAVOR = I.FLAVOR
+WHERE TOTAL_ORDER > 3000 and INGREDIENT_TYPE = "fruit_based"
+ORDER BY TOTAL_ORDER DESC
+```
+
+
+
+#### 인기있는 아이스크림
+
+```sql
+SELECT FLAVOR
+FROM FIRST_HALF
+ORDER BY TOTAL_ORDER desc, SHIPMENT_ID
+```
+
+
+
+### 강원도에 위치한 생산목장 목록 출력
+
+```sql
+SELECT FACTORY_ID, FACTORY_NAME,ADDRESS
+FROM FOOD_FACTORY
+# WHERE ADDRESS LIKE "강원도%"
+WHERE LEFT(ADDRESS, 4) = '강원도'
+ORDER by FACTORY_ID
+```
+
+`LEFT()` 함수는 문자열의 왼쪽에서 지정된 개수의 문자를 반환합니다. 주어진 문자열의 왼쪽에서 시작하여 지정된 길이만큼의 문자를 반환합니다.  `LEFT(str, length)`
+
+- `str`: 반환할 왼쪽 문자열입니다.
+- `length`: 반환할 문자열의 길이입니다.
+
+
+
+
+
+#### 서울에 위치한 식당 목록 출력하기
+
+```sql
+SELECT REST_INFO.REST_ID, REST_NAME,FOOD_TYPE, FAVORITES, ADDRESS, ROUND(AVG(REVIEW_SCORE), 2) AS SCORE
+FROM REST_INFO
+LEFT JOIN REST_REVIEW
+ON REST_INFO.REST_ID = REST_REVIEW.REST_ID
+WHERE ADDRESS Like '서울%' 
+and REVIEW_SCORE is not null
+GROUP BY REST_ID
+ORDER BY SCORE desc, FAVORITES desc
+
+
+SELECT R.REST_ID, REST_NAME, FOOD_TYPE, FAVORITES, ADDRESS,ROUND(AVG(REVIEW_SCORE),2) as SCORE
+FROM REST_REVIEW as R
+LEFT JOIN REST_INFO as I
+ON R.REST_ID = I.REST_ID
+WHERE ADDRESS like "서울%"
+GROUP BY REST_ID
+ORDER BY SCORE DESC, FAVORITES DESC
+```
+
+
+
+#### 재구매가 일어난 상품과 회원 리스트 구하기 ❎
+
+```sql
+SELECT USER_ID, PRODUCT_ID
+FROM ONLINE_SALE
+GROUP BY USER_ID, PRODUCT_ID    
+HAVING COUNT(*) > 1
+ORDER BY USER_ID, PRODUCT_ID DESC
+```
+
+
+
+#### 상위 n개 레코드
+
+동물 보호소에 가장 먼저 들어온 동물의 이름을 조회하는 SQL 문을 작성해주세요. -> **limit 1**
+
+
+
+#### 조건에 맞는 회원수 구하기
+
+```sql
+SELECT COUNT(*) AS USERS
+FROM USER_INFO
+WHERE YEAR(JOINED) = 2021
+	and AGE between 20 AND 29
+```
+
+
+
+#### 대장균들의 자식의 수 구하기
+
+```sql
+WITH CTE AS (
+    SELECT PARENT_ID, COUNT(*) as CHILD_COUNT
+    FROM ECOLI_DATA
+    WHERE PARENT_ID IS NOT NULL
+    GROUP BY PARENT_ID
+)
+
+SELECT ID, IFNULL(CHILD_COUNT, 0) as CHILD_COUNT
+FROM ECOLI_DATA
+LEFT JOIN CTE
+ON ECOLI_DATA.ID = CTE.PARENT_ID
+```
+
